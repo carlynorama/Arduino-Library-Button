@@ -40,7 +40,7 @@ new "Button.o" with your code will appear after the next press of "verify"
 Public Functions
 --------------------------------------------------------------------------------
 
-dLED myInstance = dLED(int pinNumber);
+Button myInstance = Button(int pinNumber);
 
 Button myInstance = Button(int pinNumber, bool pressedState);
 
