@@ -9,8 +9,8 @@
 #ifndef Button_h
 #define Button_h
 
-// include types & constants of Wiring core API
-#include "WProgram.h"
+// include types & constants of Arduino core API
+#include "Arduino.h"
 
 // library interface description
 class Button {
