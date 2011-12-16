@@ -12,12 +12,8 @@
 // include types & constants of Wiring core API
 #include "WProgram.h"
 
-// library interface description
 class Button {
- 
-  // user-accessible "public" interface
   public:
-  // constructors:
     Button(int myPin, bool myMode);
     Button(int myBit, bool myMode, unsigned char *myRegister);
     
@@ -26,35 +22,26 @@ class Button {
     
     void listen(void);
     
-    bool isReleased(void);
-    bool isPressed(void);
-    bool isReleased(bool refreshPinData);
-    bool isPressed(bool refreshPinData);
+    bool isReleased(bool refreshPinData = false);
+    bool isPressed(bool refreshPinData = false);
     
-    bool onChange(void);  
-    bool onPress(void);
-    bool onRelease(void);
-    bool onChange(bool refreshPinData);  
-    bool onPress(bool refreshPinData);
-    bool onRelease(bool refreshPinData);
+    bool onChange(bool refreshPinData = false);
+    bool onPress(bool refreshPinData = false);
+    bool onRelease(bool refreshPinData = false);
         
     unsigned int getDebounceDelay(void);
     void setDebounceDelay(unsigned int);
     void clearDebounceDelay(void);
     
-    bool onDoubleClick(void);
-    bool onDoubleClick(bool refreshPinData);
+    bool onDoubleClick(bool refreshPinData = false);
     
     unsigned int getDoubleClickDelay(void);
     void setDoubleClickDelay(unsigned int);
     
-    bool onPressAsToggle(void);
-    bool onReleaseAsToggle(void);
-    bool onPressAsToggle(bool refreshPinData);
-    bool onReleaseAsToggle(bool refreshPinData);
+    bool onPressAsToggle(bool refreshPinData = false);
+    bool onReleaseAsToggle(bool refreshPinData = false);
      
-    bool isHold(void);
-    bool isHold(bool refreshPinData);
+    bool isHold(bool refreshPinData = false);
     
     unsigned int getHoldDelay(void);
     void setHoldDelay(unsigned int);
@@ -67,51 +54,44 @@ class Button {
     bool isNthPress(unsigned int moduloByMe);
     bool isNthRelease(unsigned int moduloByMe);
     
- 
-
-
-  // library-accessible "private" interface
   private:
-    int _myPin;
-    int _myBit;
-    unsigned char *_myRegister;
-    unsigned char _registerValue;
-    bool _type;  //direct pin or shift register
-    bool _mode;  //HIGH == pressed (1) or LOW == pressed (0)
+    int myPin_;
+    int myBit_;
+    unsigned char *myRegister_;
+    unsigned char registerValue_;
+    bool type_;  //direct pin or shift register
+    bool mode_;  //HIGH == pressed (1) or LOW == pressed (0)
     
-    bool _lastState;
-    bool _currentState;
+    bool lastState_;
+    bool currentState_;
     
-    bool _debounced;
-    bool _lastDebouncedState;
-    bool _currentDebouncedState;
-    unsigned long int _debounceTimerStartTime;
-    unsigned int _debounceDelay;
+    bool debounced_;
+    bool lastDebouncedState_;
+    bool currentDebouncedState_;
+    unsigned long int debounceTimerStartTime_;
+    unsigned int debounceDelay_;
     
-    bool _pressed;
-    bool _released;
+    bool pressed_;
+    bool released_;
     
-    bool _changed;
-    bool _justPressed;
-    bool _justReleased;
-    unsigned int _pressCount;
-    unsigned int _releaseCount;
+    bool changed_;
+    bool justPressed_;
+    bool justReleased_;
+    unsigned int pressCount_;
+    unsigned int releaseCount_;
    
+    unsigned int doubleClickDelay_;
+    unsigned int holdDelay_;
     
-    unsigned int _doubleClickDelay;
-    unsigned int _holdDelay;
+    bool pToggleFlag_;
+    bool rToggleFlag_;
     
-    bool _pToggleFlag;
-    bool _rToggleFlag;
+    unsigned long int lastPressTime_;
+    unsigned long int currentPressTime_;
+    unsigned long int lastReleaseTime_;
+    unsigned long int currentReleaseTime_;
     
-    unsigned long int _lastPressTime;
-    unsigned long int _currentPressTime;
-    unsigned long int _lastReleaseTime;
-    unsigned long int _currentReleaseTime;
-    
-    unsigned long int _currentTime;
-
-  
+    unsigned long int currentTime_;
 };
 
 #endif

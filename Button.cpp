@@ -6,433 +6,307 @@
   Version 0.1
 */
 
-
-// include core Wiring API
-#include "WProgram.h"
-
 // include this library's description file
 #include "Button.h"
 
-   
-  
-// Constructor /////////////////////////////////////////////////////////////////
-// Function that handles the creation and setup of instances
+Button::Button(int myPin, bool mode)    
+    : type_(0)
+    , mode_(mode)
+    , myBit_(myPin_)
+    , myPin_(myPin_)
+    , myRegister_(0)
 
-//------------------------------------------------------ Using Arduino Pin Num
-Button::Button(int myPin, bool myMode)
-{
-    // initialize this instance's variables
-    this->_myPin = myPin;
+    , registerValue_(0)
     
-    pinMode(this->_myPin, INPUT);
+    , lastState_(0)
+    , currentState_(0)
     
-    this->_type = 0;
-    this->_myBit = this->_myPin;
-    this->_mode = myMode;
+    , debounced_(1)
+    , lastDebouncedState_(0)
+    , currentDebouncedState_(0)
+    , debounceTimerStartTime_(0)
+    , debounceDelay_(30)
     
-    this->_registerValue = 0;
-    
-    this->_lastState = 0;
-    this->_currentState = 0;
-    
-    this-> _debounced = 1;
-    this-> _lastDebouncedState = 0;
-    this-> _currentDebouncedState  = 0;
-    this-> _debounceTimerStartTime = 0;
-    this-> _debounceDelay = 30;
-    
-    this-> _pressed = 0;
-    this-> _released = 1;
+    , pressed_(0)
+    , released_(1)
   
-    this-> _changed = 0;
-    this-> _justPressed = 0;
-    this-> _justReleased = 0;
-    this-> _pressCount = 0;
-    this-> _releaseCount = 0;
+    , changed_(0)
+    , justPressed_(0)
+    , justReleased_(0)
+    , pressCount_(0)
+    , releaseCount_(0)
     
-    this-> _doubleClickDelay = 400; 
-    this-> _holdDelay = 1500; 
+    , doubleClickDelay_(400)
+    , holdDelay_(1500)
     
-    this-> _pToggleFlag = 0; //starts in off
-    this-> _rToggleFlag = 1; //starts in off
+    , pToggleFlag_(0) //starts in off
+    , rToggleFlag_(1) //starts in off
     
-    this-> _lastPressTime = 0;
-    this-> _currentPressTime = 0;
-    this-> _lastReleaseTime = 0;
-    this-> _currentReleaseTime = 0;
-    
-  
+    , lastPressTime_(0)
+    , currentPressTime_(0)
+    , lastReleaseTime_(0)
+    , currentReleaseTime_(0) {
+
+    pinMode(myPin_, INPUT);
 }
 
-//----------------------------------------------------------------- Using Byte
-Button::Button(int myBit, bool myMode, unsigned char *myRegister)
-{
-    // initialize this instance's variables
-    this->_type = 1;
-    this->_mode = myMode;
-    this->_myBit = myBit;
-    this->_myPin = this->_myBit;  
-    this->_myRegister = myRegister;
+Button::Button(int myBit, bool mode, unsigned char *myRegister)
+    : type_(1)
+    , mode_(mode)
+    , myBit_(myBit_)
+    , myPin_(myBit_)  
+    , myRegister_(myRegister)
+
+    , registerValue_(255)
     
-    this->_registerValue = 255;
+    , lastState_(0)
+    , currentState_(0)
     
-    this->_lastState = 0;
-    this->_currentState = 0;
+    , debounced_(1)
+    , lastDebouncedState_(0)
+    , currentDebouncedState_(0)
+    , debounceTimerStartTime_(0)
+    , debounceDelay_(30)
     
-    this-> _debounced = 1;
-    this-> _lastDebouncedState = 0;
-    this-> _currentDebouncedState = 0;
-    this-> _debounceTimerStartTime = 0;
-    this-> _debounceDelay = 30;
-    
-    this-> _pressed = 0;
-    this-> _released = 1;
+    , pressed_(0)
+    , released_(1)
   
-    this-> _changed = 0;
-    this-> _justPressed = 0;
-    this-> _justReleased = 0;
-    this-> _pressCount = 0;
-    this-> _releaseCount = 0;
+    , changed_(0)
+    , justPressed_(0)
+    , justReleased_(0)
+    , pressCount_(0)
+    , releaseCount_(0)
     
-    this-> _doubleClickDelay = 400; 
-    this-> _holdDelay = 1500; 
+    , doubleClickDelay_(400)
+    , holdDelay_(1500)
     
-    this-> _pToggleFlag = 0; //starts in off
-    this-> _rToggleFlag = 1; //starts in off
+    , pToggleFlag_(0) //starts in off
+    , rToggleFlag_(1) //starts in off
     
-    this-> _lastPressTime = 0;
-    this-> _currentPressTime = 0;
-    this-> _lastReleaseTime = 0;
-    this-> _currentReleaseTime = 0;
-  
-  
-}
+    , lastPressTime_(0)
+    , currentPressTime_(0)
+    , lastReleaseTime_(0)
+    , currentReleaseTime_(0)
+{}
 
 // Public Methods //////////////////////////////////////////////////////////////
 // Functions available in Wiring sketches, this library, and other libraries
 
 //---------////////////////////MAIN LOOP / LISTENER ///////////--------------//
 
-  void Button::listen(void){
+void Button::listen(void){
+    currentTime_ = millis();
   
-  _currentTime = millis();
+    if(!type_) {
+        currentState_ = digitalRead(myPin_);
+    } else {
+        registerValue_ = *myRegister_;
+  	currentState_ = registerValue_ & (1 << myBit_);
+    }
   
-  if(!_type) {
-  	this->_currentState = digitalRead(this->_myPin);
-  } else {
-    _registerValue = *_myRegister;
-  	this->_currentState = _registerValue & (1 << _myBit);
-  }
+    if (currentState_ != lastState_) {
+        debounced_ = false;
+        debounceTimerStartTime_ = currentTime_;
+    } else if ((currentTime_ - debounceTimerStartTime_) > debounceDelay_) {
+        debounced_ = true;
+    }
   
-  if (_currentState != _lastState) {
-    _debounced = false;
-    _debounceTimerStartTime = _currentTime;
-  } else if ((_currentTime - _debounceTimerStartTime) > _debounceDelay) {
-    _debounced = true;
-  }
+    if (debounced_) {
+        lastDebouncedState_ = currentDebouncedState_;
+        currentDebouncedState_ = currentState_;
+    }
   
-  if (_debounced) {
-    _lastDebouncedState = _currentDebouncedState;
-    _currentDebouncedState = _currentState;
-  }
+    if (currentDebouncedState_ == mode_) {
+        pressed_ = true;
+        released_ = false;
+        justReleased_ = false;
+    } else {
+        pressed_ = false;
+        released_ = true;
+        justPressed_ = false;
+    }
   
+    if (lastDebouncedState_ != currentDebouncedState_) {
+        changed_ = true;
+    } else {
+        changed_ = false;
+        justPressed_ = false;
+        justReleased_ = false;
+    }
   
-  if (_currentDebouncedState == _mode) {
-    _pressed = true;
-    _released = false;
-    _justReleased = false;
-  } else {
-    _pressed = false;
-    _released = true;
-    _justPressed = false;
-  }
-  
-  
-  if (_lastDebouncedState != _currentDebouncedState) {
-    _changed = true;
-  } else {
-    _changed = false;
-    _justPressed = false;
-    _justReleased = false;
-  }
-  
-  if (_changed && _pressed) {
-    _justPressed = true;
-    _pressCount ++;
-    _lastPressTime = _currentPressTime;
-    _currentPressTime = _currentTime;
-    _justReleased = false;
-  } else if(_changed && _released){
-    _justPressed = false;
-    _justReleased = true;
-    _releaseCount ++;
-    _lastReleaseTime = _currentReleaseTime;
-    _currentReleaseTime = _currentTime;
-  } else if(!_changed) { //added no effect...
-    _justPressed = false; //added no effect...
-    _justReleased = false; //added no effect...
-  } else if (_released) { //added no effect...
-      _justPressed = false; //added no effect...
-  } else if (_pressed) { //added no effect...
-    _justReleased = false; //added no effect...
-  }
-  	
-  //wrap up the funtion
-  _lastState = _currentState;
-    
-  }
+    if (changed_ && pressed_) {
+        justPressed_ = true;
+        pressCount_ ++;
+        lastPressTime_ = currentPressTime_;
+        currentPressTime_ = currentTime_;
+        justReleased_ = false;
+    } else if(changed_ && released_){
+        justPressed_ = false;
+        justReleased_ = true;
+        releaseCount_ ++;
+        lastReleaseTime_ = currentReleaseTime_;
+        currentReleaseTime_ = currentTime_;
+    } else if(!changed_) { //added no effect...
+        justPressed_ = false; //added no effect...
+        justReleased_ = false; //added no effect...
+    } else if (released_) { //added no effect...
+        justPressed_ = false; //added no effect...
+    } else if (pressed_) { //added no effect...
+        justReleased_ = false; //added no effect...
+    }
+	
+    //wrap up the funtion
+    lastState_ = currentState_;
+}
   
  //----------------------------------------------------------- END LISTENER
  
  // -------------------------------------------------------//// DEBOUNCE /// 
  
 unsigned int Button::getDebounceDelay(void) {
-	return _debounceDelay;
+    return debounceDelay_;
 }
 
 void Button::setDebounceDelay(unsigned int newDebounceDelay) {
-	_debounceDelay = newDebounceDelay;
+    debounceDelay_ = newDebounceDelay;
 }
 
- void Button::clearDebounceDelay(void){
- 	setDebounceDelay(0);
- }
- 
- 
- 
-  // -------------------------------------------------------//// UP OR DOWN /// 
+void Button::clearDebounceDelay(void){
+    setDebounceDelay(0);
+}
   
- //----------------------------------------------------- isReleased
- bool Button::isReleased(bool refreshPinData){
+ // -------------------------------------------------------//// UP OR DOWN /// 
   
-     if (refreshPinData) {
-  		listen();
-  		return _released;
-  	} else {
-  		return _released;
-	}
-  }
+bool Button::isReleased(bool refreshPinData){  
+    if (refreshPinData) {
+        listen();
+  	return released_;
+    }
+    return released_;
+}
 
- //------------------------------------------------- overload
- bool Button::isReleased(void){
-  		return isReleased(0);
-  }
-  
- //----------------------------------------------------- isPressed
- bool Button::isPressed(bool refreshPinData){
-   if (refreshPinData) {
-  		listen();
-  		return _pressed; 
-  	} else {
-  		return _pressed; 
-  	}
-  }
-  
-  
- //------------------------------------------------ overload
-  bool Button::isPressed(void){
-  		return isPressed(0); 
-  }
-  
-  
-     // -------------------------------------------------------//// COUNTS /// 
+bool Button::isPressed(bool refreshPinData){
+    if (refreshPinData) {
+        listen();
+    } 
+    return pressed_;
+}    
+
+ // -------------------------------------------------------//// COUNTS /// 
  
 unsigned int Button::getPressCount(void) {
-	return _pressCount;
+    return pressCount_;
 }
 
- void Button::clearPressCount(void){
- 	_pressCount = 0;
- }
+void Button::clearPressCount(void){
+    pressCount_ = 0;
+}
  
 unsigned int Button::getReleaseCount(void) {
-	return _pressCount;
+    return pressCount_;
 }
 
- void Button::clearReleaseCount(void){
- 	_releaseCount = 0;
- } 
+void Button::clearReleaseCount(void){
+    releaseCount_ = 0;
+}
   
+ // -------------------------------------------------------////   EVENTS   /// 
   
-  // -------------------------------------------------------////   EVENTS   /// 
-  
- 
- //---------------------------------------------------- onChange
- bool Button::onChange(void){
-    return _changed;
-  }
-   
- //------------------------------------------------ overload  
- bool Button::onChange(bool refreshPinData){
+bool Button::onChange(bool refreshPinData){
     if (refreshPinData) {
-  		listen();
-  		return _changed; 
-  	} else {
-  		return _changed; 
-  	}
-  }
+        listen();
+    }
+    return changed_;
+}
   
- //---------------------------------------------------- onPress 
-  bool Button::onPress(void){
-    return _justPressed;
-
-  }
- //------------------------------------------------ overload
-   bool Button::onPress(bool refreshPinData){
-   if (refreshPinData) {
-  		listen();
-  		return onPress();  
-  	} else {
-  		return onPress(); 
-  	}
-
-  }
+bool Button::onPress(bool refreshPinData){
+    if (refreshPinData) {
+        listen();
+    }
+    return justPressed_;
+}
     
- //---------------------------------------------------- onRelease
-  bool Button::onRelease(void){
-    return _justReleased;
-
-  }
- //------------------------------------------------ overload 
-    bool Button::onRelease(bool refreshPinData){
-   if (refreshPinData) {
-  		listen();
-  		return onRelease(); 
-  	} else {
-  		return onRelease();  
-  	}
-
-  }
+bool Button::onRelease(bool refreshPinData){
+    if (refreshPinData) {
+        listen();
+    }
+    return justReleased_;
+}
 
  //---------------------------------------------------- TOGGLES 
-bool Button::onPressAsToggle(void){
-   if (_justPressed) {
-    _pToggleFlag ? _pToggleFlag=false : _pToggleFlag=true;
-  }
-  return _pToggleFlag;
- }
- 
  
 bool Button::onPressAsToggle(bool refreshPinData){
     if (refreshPinData) {
         listen();    
-        return onPressAsToggle();
     }
-    else {
-        return(onPressAsToggle());
+
+    if (justPressed_) {
+        pToggleFlag_ = !pToggleFlag_;
     }
+    return pToggleFlag_;
 }
- 
-bool Button::onReleaseAsToggle(){
-   if (_justReleased) {
-    _rToggleFlag ? _rToggleFlag=false : _rToggleFlag=true;
-  }
-  return _rToggleFlag;
- }
  
 bool Button::onReleaseAsToggle(bool refreshPinData){
     if (refreshPinData) {
         listen();    
-        return onReleaseAsToggle();
     }
-    else {
-        return onReleaseAsToggle();
+
+    if (justReleased_) {
+        rToggleFlag_ = !rToggleFlag_;
     }
+    return rToggleFlag_;
 }
 
  //------------------------------------------------------- DOUBLE CLICK
- //----------------------------------------------------- OnDoubleClick
  
-bool Button::onDoubleClick(void)  {
-
-    return(_justReleased && (_currentReleaseTime - _lastReleaseTime) <= _doubleClickDelay);
-
-}
- //--------------------------------------------------- overload
 bool Button::onDoubleClick(bool refreshPinData){
     if (refreshPinData) {
         listen();    
-        return onDoubleClick();
     }
-    else {
-        return onDoubleClick();
-    }
+    return(justReleased_ && (currentReleaseTime_ - lastReleaseTime_) <= doubleClickDelay_);
 }
 
-   // --------------------------------        --------- get and set delay 
- 
 unsigned int Button::getDoubleClickDelay(void) {
-	return _doubleClickDelay;
+    return doubleClickDelay_;
 }
 
 void Button::setDoubleClickDelay(unsigned int newDoubleClickDelay) {
-	_doubleClickDelay = newDoubleClickDelay;
+    doubleClickDelay_ = newDoubleClickDelay;
 }
 
  //---------------------------------------------------------------- HOLDING
- //----------------------------------------------------- OnHold
- 
-bool Button::isHold(void)  {
 
-    return _pressed && (_currentTime - _currentPressTime) > _holdDelay;
-
-}
- //--------------------------------------------------- overload
 bool Button::isHold(bool refreshPinData){
     if (refreshPinData) {
         listen();    
-        return isHold();
     }
-    else {
-        return isHold();
-    }
+    return pressed_ && (currentTime_ - currentPressTime_) > holdDelay_;
 }
-
-   // ----------------------------------------- get and set delay 
  
 unsigned int Button::getHoldDelay(void) {
-	return _holdDelay;
+    return holdDelay_;
 }
 
 void Button::setHoldDelay(unsigned int newHoldDelay) {
-	_holdDelay = newHoldDelay;
+    holdDelay_ = newHoldDelay;
 }
 
  //----------------------------------------------------------- isNTH Sillyness
 
 bool Button::isNthPress(unsigned int moduloByMe) {
-  if  (_pressCount) {
-    if (!(_pressCount % moduloByMe)) {
-        return true;
-    } 
-    else {
-      return false;
-    }
-  }
-  }
-
-
-bool Button::isNthRelease(unsigned int moduloByMe) {
-  if  (_releaseCount) {
-    if (!(_releaseCount % moduloByMe)) {
-      return true;
-    } 
-    else {
-      return false;
-    }
-  }
-  }
-  
-
-// -------------------------------------------------------////    ADMIN   /// 
-unsigned char Button::getRegisterValue(void){
-	return(_registerValue);
+    return pressCount_ % moduloByMe == 0;
 }
 
 
-/*
-	version() returns the version of the library:
-*/
+bool Button::isNthRelease(unsigned int moduloByMe) {
+    return releaseCount_ % moduloByMe == 0;
+}
+
+ // -------------------------------------------------------////    ADMIN   /// 
+unsigned char Button::getRegisterValue(void){
+    return registerValue_;
+}
+
 char* Button::version(void) {
-	return "0.1";
+    return "0.1";
 }
