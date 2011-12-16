@@ -15,51 +15,47 @@
 class Button {
   public:
     Button(int myPin, bool myMode);
-    Button(int myBit, bool myMode, unsigned char *myRegister);
     
     char* version(void);			// get the library version
-    unsigned char getRegisterValue(void);
     
     void listen(void);
     
-    bool isReleased(bool refreshPinData = false);
-    bool isPressed(bool refreshPinData = false);
+    bool isReleased() const {return released_;}
+    bool isPressed() const {return pressed_;}
     
-    bool onChange(bool refreshPinData = false);
-    bool onPress(bool refreshPinData = false);
-    bool onRelease(bool refreshPinData = false);
+    bool onChange() const {return changed_;}
+    bool onPress() const {return justPressed_;}
+    bool onRelease() const {return justReleased_;}
         
     unsigned int getDebounceDelay(void);
     void setDebounceDelay(unsigned int);
     void clearDebounceDelay(void);
     
-    bool onDoubleClick(bool refreshPinData = false);
+    bool onDoubleClick();
     
-    unsigned int getDoubleClickDelay(void);
+    unsigned int getDoubleClickDelay(void) {return doubleClickDelay_;}
     void setDoubleClickDelay(unsigned int);
     
-    bool onPressAsToggle(bool refreshPinData = false);
-    bool onReleaseAsToggle(bool refreshPinData = false);
+    // FIXME This code would not work if you call this method twice
+    bool onPressAsToggle();
+    // FIXME This code would not work if you call this method twice
+    bool onReleaseAsToggle();
      
-    bool isHold(bool refreshPinData = false);
+    bool isHold();
     
     unsigned int getHoldDelay(void);
     void setHoldDelay(unsigned int);
     
-    unsigned int getPressCount(void);
+    unsigned int getPressCount(void) const {return pressCount_;}
     void clearPressCount(void);    
-    unsigned int getReleaseCount(void);
+    unsigned int getReleaseCount(void) const {return releaseCount_;}
     void clearReleaseCount(void);
     
-    bool isNthPress(unsigned int moduloByMe);
-    bool isNthRelease(unsigned int moduloByMe);
+    bool isNthPress(unsigned int moduloByMe) const;
+    bool isNthRelease(unsigned int moduloByMe) const;
     
   private:
     int myPin_;
-    int myBit_;
-    unsigned char *myRegister_;
-    unsigned char registerValue_;
-    bool type_;  //direct pin or shift register
     bool mode_;  //HIGH == pressed (1) or LOW == pressed (0)
     
     bool lastState_;

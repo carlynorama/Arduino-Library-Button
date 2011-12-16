@@ -6,18 +6,12 @@
   Version 0.1
 */
 
-// include this library's description file
 #include "button.h"
 
 Button::Button(int myPin, bool mode)    
-    : type_(0)
-    , mode_(mode)
-    , myBit_(myPin_)
+    : mode_(mode)
     , myPin_(myPin_)
-    , myRegister_(0)
 
-    , registerValue_(0)
-    
     , lastState_(0)
     , currentState_(0)
     
@@ -50,45 +44,6 @@ Button::Button(int myPin, bool mode)
     pinMode(myPin_, INPUT);
 }
 
-Button::Button(int myBit, bool mode, unsigned char *myRegister)
-    : type_(1)
-    , mode_(mode)
-    , myBit_(myBit_)
-    , myPin_(myBit_)  
-    , myRegister_(myRegister)
-
-    , registerValue_(255)
-    
-    , lastState_(0)
-    , currentState_(0)
-    
-    , debounced_(1)
-    , lastDebouncedState_(0)
-    , currentDebouncedState_(0)
-    , debounceTimerStartTime_(0)
-    , debounceDelay_(30)
-    
-    , pressed_(0)
-    , released_(1)
-  
-    , changed_(0)
-    , justPressed_(0)
-    , justReleased_(0)
-    , pressCount_(0)
-    , releaseCount_(0)
-    
-    , doubleClickDelay_(400)
-    , holdDelay_(1500)
-    
-    , pToggleFlag_(0) //starts in off
-    , rToggleFlag_(1) //starts in off
-    
-    , lastPressTime_(0)
-    , currentPressTime_(0)
-    , lastReleaseTime_(0)
-    , currentReleaseTime_(0)
-{}
-
 // Public Methods //////////////////////////////////////////////////////////////
 // Functions available in Wiring sketches, this library, and other libraries
 
@@ -97,12 +52,7 @@ Button::Button(int myBit, bool mode, unsigned char *myRegister)
 void Button::listen(void){
     currentTime_ = millis();
   
-    if(!type_) {
-        currentState_ = digitalRead(myPin_);
-    } else {
-        registerValue_ = *myRegister_;
-  	currentState_ = registerValue_ & (1 << myBit_);
-    }
+    currentState_ = digitalRead(myPin_);
   
     if (currentState_ != lastState_) {
         debounced_ = false;
@@ -175,82 +125,28 @@ void Button::clearDebounceDelay(void){
     setDebounceDelay(0);
 }
   
- // -------------------------------------------------------//// UP OR DOWN /// 
-  
-bool Button::isReleased(bool refreshPinData){  
-    if (refreshPinData) {
-        listen();
-  	return released_;
-    }
-    return released_;
-}
-
-bool Button::isPressed(bool refreshPinData){
-    if (refreshPinData) {
-        listen();
-    } 
-    return pressed_;
-}    
-
  // -------------------------------------------------------//// COUNTS /// 
  
-unsigned int Button::getPressCount(void) {
-    return pressCount_;
-}
-
 void Button::clearPressCount(void){
     pressCount_ = 0;
 }
  
-unsigned int Button::getReleaseCount(void) {
-    return pressCount_;
-}
-
 void Button::clearReleaseCount(void){
     releaseCount_ = 0;
 }
   
- // -------------------------------------------------------////   EVENTS   /// 
-  
-bool Button::onChange(bool refreshPinData){
-    if (refreshPinData) {
-        listen();
-    }
-    return changed_;
-}
-  
-bool Button::onPress(bool refreshPinData){
-    if (refreshPinData) {
-        listen();
-    }
-    return justPressed_;
-}
-    
-bool Button::onRelease(bool refreshPinData){
-    if (refreshPinData) {
-        listen();
-    }
-    return justReleased_;
-}
-
  //---------------------------------------------------- TOGGLES 
  
-bool Button::onPressAsToggle(bool refreshPinData){
-    if (refreshPinData) {
-        listen();    
-    }
-
+bool Button::onPressAsToggle(){
+    // FIXME This code would not work if you call this method twice
     if (justPressed_) {
         pToggleFlag_ = !pToggleFlag_;
     }
     return pToggleFlag_;
 }
  
-bool Button::onReleaseAsToggle(bool refreshPinData){
-    if (refreshPinData) {
-        listen();    
-    }
-
+bool Button::onReleaseAsToggle(){
+    // FIXME This code would not work if you call this method twice
     if (justReleased_) {
         rToggleFlag_ = !rToggleFlag_;
     }
@@ -259,15 +155,8 @@ bool Button::onReleaseAsToggle(bool refreshPinData){
 
  //------------------------------------------------------- DOUBLE CLICK
  
-bool Button::onDoubleClick(bool refreshPinData){
-    if (refreshPinData) {
-        listen();    
-    }
+bool Button::onDoubleClick(){
     return(justReleased_ && (currentReleaseTime_ - lastReleaseTime_) <= doubleClickDelay_);
-}
-
-unsigned int Button::getDoubleClickDelay(void) {
-    return doubleClickDelay_;
 }
 
 void Button::setDoubleClickDelay(unsigned int newDoubleClickDelay) {
@@ -276,10 +165,7 @@ void Button::setDoubleClickDelay(unsigned int newDoubleClickDelay) {
 
  //---------------------------------------------------------------- HOLDING
 
-bool Button::isHold(bool refreshPinData){
-    if (refreshPinData) {
-        listen();    
-    }
+bool Button::isHold(){
     return pressed_ && (currentTime_ - currentPressTime_) > holdDelay_;
 }
  
@@ -293,19 +179,16 @@ void Button::setHoldDelay(unsigned int newHoldDelay) {
 
  //----------------------------------------------------------- isNTH Sillyness
 
-bool Button::isNthPress(unsigned int moduloByMe) {
+bool Button::isNthPress(unsigned int moduloByMe) const {
     return pressCount_ % moduloByMe == 0;
 }
 
 
-bool Button::isNthRelease(unsigned int moduloByMe) {
+bool Button::isNthRelease(unsigned int moduloByMe) const {
     return releaseCount_ % moduloByMe == 0;
 }
 
  // -------------------------------------------------------////    ADMIN   /// 
-unsigned char Button::getRegisterValue(void){
-    return registerValue_;
-}
 
 char* Button::version(void) {
     return "0.1";
