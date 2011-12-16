@@ -7,7 +7,7 @@
 */
 
 // include this library's description file
-#include "Button.h"
+#include "button.h"
 
 Button::Button(int myPin, bool mode)    
     : type_(0)
