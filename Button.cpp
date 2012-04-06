@@ -7,8 +7,8 @@
 */
 
 
-// include core Wiring API
-#include "WProgram.h"
+// include core Arduino API
+#include "Arduino.h"
 
 // include this library's description file
 #include "Button.h"
