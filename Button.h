@@ -1,16 +1,21 @@
 /*
-	Button.h - - Button library for Wiring/Arduino - Version 0.1
+	Button.h - - Button library for Wiring/Arduino - Version 0.2
 	
-	Original library 		(0.1) by Carlyn Maw.
+	Original library 		(0.2) by Carlyn Maw.
 	
  */
 
 // ensure this library description is only included once
 #ifndef Button_h
 #define Button_h
+#define LIBRARY_VERSION	 0.2
 
-// include types & constants of Wiring core API
-#include "WProgram.h"
+// include core Wiring API and now Arduino
+#if ARDUINO >= 100
+  #include "Arduino.h"
+#else
+  #include "WProgram.h"
+#endif
 
 // library interface description
 class Button {

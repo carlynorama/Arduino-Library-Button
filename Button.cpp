@@ -2,13 +2,10 @@
   Button.h - Button library for Wiring/Arduino
   (cc) 2007 Carlyn Maw .  Some rights reserved.
   
-  Created 13 Apr 2007
-  Version 0.1
+  Created  2007 Apr 13 
+  Updated 2012 Apr 5
+  Version 0.2
 */
-
-
-// include core Wiring API
-#include "WProgram.h"
 
 // include this library's description file
 #include "Button.h"
